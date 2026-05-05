@@ -1,7 +1,9 @@
 # Langcli
 
 <div align="center">
-[English](../../README.md) | [简体中文](./README_zh.md)
+
+[English](/README.md) | [简体中文](./README_zh.md)
+
 </div>
 
 Langcli 是一款在终端中使用的交互式 AI 编程助手, 它是基于[Claude code泄露的代码](https://github.com/claude-code-best/claude-code)进行二次开发而成。它有这些特点：
@@ -9,7 +11,7 @@ Langcli 是一款在终端中使用的交互式 AI 编程助手, 它是基于[Cl
 - 更令人兴奋的是Langcli与[LangRouter](https://langrouter.ai/)已深度集成，这样，你可以在一个正在工作的session中根据需求随意使用、切换主流的LLM 模型(包括Claude OPUS 4.6, Deepseek v4 flash, Deepseek v4 pro, GLM 5.1, Kimi K2.6, Minimax M2.5等)，而不会中断你的上下文。
 
 <div align="center">
-  <img title="Langcli" height=400 alt="Alt text" src="../assets/screen.jpg">
+  <img title="Langcli" height=400 alt="Alt text" src="/docs/assets/screen.jpg">
 </div>
 
 ## 快速开始
