@@ -80,21 +80,6 @@ bun run dev
 bun run build && bun dist/cli.js
 ```
 
-## 快速开始
-
-#### LangRouter api-key准备
- 去[LangRouter](https://langrouter.ai/)注册一个账号，保存api-key，且确保账户有一定的剩余金额(可充值$2 进行体验)
-
-#### 安装
-```bash
-npm i -g langcli-com
-```
-
-#### 运行
-```bash
-langcli
-```
-
 构建出的版本 bun 和 node 都可以启动, 你 publish 到私有源可以直接启动
 
 如果遇到 bug 请直接提一个 issues, 我们优先解决
