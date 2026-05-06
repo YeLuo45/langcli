@@ -14,22 +14,51 @@ Langcli 是一款在终端中使用的交互式 AI 编程助手, 它是基于[Cl
   <img title="Langcli" height=400 alt="Alt text" src="/docs/assets/screen.jpg">
 </div>
 
-## 快速开始
+## 安装
 
-#### LangRouter api-key准备
- 去[LangRouter](https://langrouter.ai/)注册一个账号，保存api-key，且确保账户有一定的剩余金额(可充值$2 进行体验)
+### 快速安装（推荐）
 
-#### 安装
+#### Linux / macOS
+
+```bash
+bash -c "$(curl -fsSL https://assets.langcli.com/installation/install-langcli.sh)"
+```
+
+#### Windows (请使用Administrator运行Powershell)
+
+```cmd
+cmd /c "curl -fsSL -o %TEMP%\install-langcli.bat https://assets.langcli.com/installation/install-langcli.bat && %TEMP%\install-langcli.bat"
+```
+
+> **备注**: 安装完成后建议重启终端，以确保环境变量生效。
+
+### 手动安装
+
+#### 前提条件
+
+请确保您已安装 Node.js 20 或更高版本。如果你还没安装，请你[下载](https://nodejs.org/en/download)安装它。
+
+#### NPM安装
+
 ```bash
 npm i -g langcli-com
 ```
 
+## 快速开始
+
+#### LangRouter api-key准备
+ 去 [LangRouter](https://langrouter.ai/) 注册一个账号，保存api-key
+
 #### 运行
 ```bash
+# 启动langcli (交互式的)
 langcli
+
+# 然后，在回话中:
+/help
 ```
 
-## 自己从源代码编译、运行(可选)
+## 自己从源代码编译、运行 (可选)
 
 #### 环境要求
 
@@ -44,11 +73,26 @@ bun install
 #### 运行
 
 ```bash
-# 开发模式
+# 开发模式启动
 bun run dev
 
-# 构建 and run
+# 编译运行
 bun run build && bun dist/cli.js
+```
+
+## 快速开始
+
+#### LangRouter api-key准备
+ 去[LangRouter](https://langrouter.ai/)注册一个账号，保存api-key，且确保账户有一定的剩余金额(可充值$2 进行体验)
+
+#### 安装
+```bash
+npm i -g langcli-com
+```
+
+#### 运行
+```bash
+langcli
 ```
 
 构建出的版本 bun 和 node 都可以启动, 你 publish 到私有源可以直接启动

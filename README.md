@@ -39,7 +39,7 @@ cmd /c "curl -fsSL -o %TEMP%\install-langcli.bat https://assets.langcli.com/inst
 
 Make sure you have Node.js 20 or later installed. Download it from [nodejs.org](https://nodejs.org/en/download).
 
-#### NPM
+#### NPM installation
 
 ```bash
 npm i -g langcli-com
