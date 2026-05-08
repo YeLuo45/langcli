@@ -15,6 +15,7 @@ import type {
   BetaToolResultBlockParam,
   BetaToolUnion,
   BetaUsage,
+  BetaThinkingBlock,
   BetaMessageParam as MessageParam,
 } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
@@ -2090,7 +2091,47 @@ async function* queryModel(
                   })
                 }
                 break
-              case 'text':
+              case 'text': {
+                // Merge all accumulated thinking blocks into ONE
+                // AssistantMessage and yield it before text output begins.
+                // The API proxy may split thinking into multiple separate
+                // thinking blocks (one per sentence fragment), so we
+                // concatenate their text and yield a single message to
+                // avoid "∴ Thinking…" appearing repeatedly.
+                if (partialMessage) {
+                  const thinkingBlocks = Object.keys(contentBlocks)
+                    .sort((a, b) => Number(a) - Number(b))
+                    .map(k => contentBlocks[Number(k)])
+                    .filter((b): b is BetaThinkingBlock => b?.type === 'thinking')
+                  if (thinkingBlocks.length > 0) {
+                    const mergedThinking = thinkingBlocks.map(b => b.thinking).join('')
+                    const mergedBlock: BetaThinkingBlock = {
+                      type: 'thinking',
+                      thinking: mergedThinking,
+                      signature: thinkingBlocks[0].signature ?? '',
+                    }
+                    const m: AssistantMessage = {
+                      message: {
+                        ...partialMessage,
+                        usage: partialMessage.usage ?? { ...EMPTY_USAGE },
+                        content: normalizeContentFromAPI(
+                          [mergedBlock] as BetaContentBlock[],
+                          tools,
+                          options.agentId,
+                        ) as MessageContent,
+                      },
+                      requestId: streamRequestId ?? undefined,
+                      type: 'assistant',
+                      uuid: randomUUID(),
+                      timestamp: new Date().toISOString(),
+                      ...(process.env.USER_TYPE === 'ant' &&
+                        research !== undefined && { research }),
+                      ...(advisorModel && { advisorModel }),
+                    }
+                    newMessages.push(m)
+                    yield m
+                  }
+                }
                 contentBlocks[part.index] = {
                   ...part.content_block,
                   // awkwardly, the sdk sometimes returns text as part of a
@@ -2101,6 +2142,7 @@ async function* queryModel(
                   text: '',
                 }
                 break
+              }
               case 'thinking':
                 contentBlocks[part.index] = {
                   ...part.content_block,
@@ -2263,26 +2305,31 @@ async function* queryModel(
               })
               throw new Error('Message not found')
             }
-            const m: AssistantMessage = {
-              message: {
-                ...partialMessage,
-                usage: partialMessage.usage ?? { ...EMPTY_USAGE },
-                content: normalizeContentFromAPI(
-                  [contentBlock] as BetaContentBlock[],
-                  tools,
-                  options.agentId,
-                ) as MessageContent,
-              },
-              requestId: streamRequestId ?? undefined,
-              type: 'assistant',
-              uuid: randomUUID(),
-              timestamp: new Date().toISOString(),
-              ...(process.env.USER_TYPE === 'ant' &&
-                research !== undefined && { research }),
-              ...(advisorModel && { advisorModel }),
+            // Defer thinking block yield — thinking is yielded when
+            // content_block_start(type='text') arrives, so it appears
+            // as a single complete block right before text output.
+            if (contentBlock.type !== 'thinking') {
+              const m: AssistantMessage = {
+                message: {
+                  ...partialMessage,
+                  usage: partialMessage.usage ?? { ...EMPTY_USAGE },
+                  content: normalizeContentFromAPI(
+                    [contentBlock] as BetaContentBlock[],
+                    tools,
+                    options.agentId,
+                  ) as MessageContent,
+                },
+                requestId: streamRequestId ?? undefined,
+                type: 'assistant',
+                uuid: randomUUID(),
+                timestamp: new Date().toISOString(),
+                ...(process.env.USER_TYPE === 'ant' &&
+                  research !== undefined && { research }),
+                ...(advisorModel && { advisorModel }),
+              }
+              newMessages.push(m)
+              yield m
             }
-            newMessages.push(m)
-            yield m
             break
           }
           case 'message_delta': {
@@ -3173,9 +3220,9 @@ export function addCacheBreakpoints(
         querySource,
       )
     }
-    const tmpMsg = stripThinkingBlocksFromAssistantMessage(msg);
+    //const tmpMsg = stripThinkingBlocksFromAssistantMessage(msg);
     return assistantMessageToMessageParam(
-      tmpMsg,
+      msg,
       addCache,
       enablePromptCaching,
       querySource,
