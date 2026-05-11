@@ -13,8 +13,11 @@ import {
   GLM_5_1_CONFIG,
   GPT_5_3_CODEX_CONFIG,
   MOONSHOT_KIMI_K2_6_CONFIG,
+  RING_2_6_1T_CONFIG,
 } from './configs.js'
-
+import {
+  has1mContext,
+} from '../context.js'
 export type ModelShortName = string
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
@@ -68,14 +71,23 @@ export function getBestModel(): ModelName {
 }
 
 export function getDefaultOpusModel(): ModelName {
+  if (process.env.ANTHROPIC_DEFAULT_OPUS_MODEL) {
+    return process.env.ANTHROPIC_DEFAULT_OPUS_MODEL
+  }
   return CLAUDE_OPUS_4_6_CONFIG
 }
 
 export function getDefaultSonnetModel(): ModelName {
-  return MOONSHOT_KIMI_K2_5_CONFIG
+  if (process.env.ANTHROPIC_DEFAULT_SONNET_MODEL) {
+    return process.env.ANTHROPIC_DEFAULT_SONNET_MODEL
+  }
+  return DEEPSEEK_V4_PRO_CONFIG
 }
 
 export function getDefaultHaikuModel(): ModelName {
+  if (process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) {
+    return process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
+  }
   return DEEPSEEK_V4_FLASH_CONFIG
 }
 
@@ -93,7 +105,10 @@ export function getDefaultMainLoopModel(): ModelName {
 
 export function getCanonicalName(fullModelName: ModelName): ModelShortName {
   const name = fullModelName.toLowerCase()
-  if (name.includes('deepseek')) {
+  if (name.includes('deepseek-v4-pro')) {
+    return 'deepseek-v4-pro'
+  }
+  if (name.includes('deepseek-v4-flash')) {
     return 'deepseek-v4-flash'
   }
   if (name.includes('kimi-k2.6')) {
@@ -114,6 +129,10 @@ export function getCanonicalName(fullModelName: ModelName): ModelShortName {
   if (name.includes('glm')) {
     return 'glm-5.1'
   }
+  if (name.includes('ring-2.6-1t')) {
+    return 'ring-2.6-1t'
+  }
+
   return fullModelName
 }
 
@@ -173,6 +192,10 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
   if (model === 'kimi-k2.6') {
     return 'Kimi K2.6'
   }
+  if (model === 'ring-2.6-1t') {
+    return 'Ring 2.6 1T'
+  }
+
   return null
 }
 
@@ -224,7 +247,36 @@ export function parseUserSpecifiedModel(
   if (modelInputTrimmed === 'kimi-k2.6') {
     return MOONSHOT_KIMI_K2_6_CONFIG
   }
+  if (modelInputTrimmed === 'ring-2.6-1t') {
+    return RING_2_6_1T_CONFIG
+  }
 
+  const normalizedModel = modelInputTrimmed.toLowerCase()
+
+  const has1mTag = has1mContext(normalizedModel)
+  const modelString = has1mTag
+    ? normalizedModel.replace(/\[1m]$/i, '').trim()
+    : normalizedModel
+
+  if (isModelAlias(modelString)) {
+    switch (modelString) {
+      case 'opusplan':
+        return getDefaultSonnetModel() + (has1mTag ? '[1m]' : '') // Sonnet is default, Opus in plan mode
+      case 'sonnet':
+        return getDefaultSonnetModel() + (has1mTag ? '[1m]' : '')
+      case 'haiku':
+        return getDefaultHaikuModel() + (has1mTag ? '[1m]' : '')
+      case 'opus':
+        return getDefaultOpusModel() + (has1mTag ? '[1m]' : '')
+      case 'best':
+        return getBestModel()
+      default:
+    }
+  }
+
+  if (has1mTag) {
+    return modelInputTrimmed.replace(/\[1m\]$/i, '').trim() + '[1m]'
+  }
   return modelInputTrimmed
 }
 
@@ -259,7 +311,13 @@ export function isLegacyModelRemapEnabled(): boolean {
 }
 
 function isModelAlias(model: string): boolean {
-  return ['deepseek', 'moonshot', 'minimax'].includes(model.toLowerCase())
+  return ['sonnet',
+  'opus',
+  'haiku',
+  'best',
+  'sonnet[1m]',
+  'opus[1m]',
+  'opusplan', 'deepseek', 'moonshot', 'minimax'].includes(model.toLowerCase())
 }
 
 export type CustomModelConfig = {

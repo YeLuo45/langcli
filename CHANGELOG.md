@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.26
+
+- Add Ring 2.6 1T model
+
+## 0.1.25
+
+- Fix thinking block missing problem when using anthropic protocol + deepseek v4
+
 ## 0.1.24
 
 - Fix the onboarding logic

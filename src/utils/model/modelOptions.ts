@@ -8,11 +8,15 @@ import {
   GLM_5_1_CONFIG,
   GPT_5_3_CODEX_CONFIG,
   MOONSHOT_KIMI_K2_6_CONFIG,
+  RING_2_6_1T_CONFIG,
 } from './configs.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
 import { getGlobalConfig } from '../config.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import type { ModelProviders } from '../settings/types.js'
+import {
+  has1mContext,
+} from '../context.js'
 
 export type ModelOption = {
   value: string
@@ -101,9 +105,19 @@ function getGptCodexOption(): ModelOption {
   }
 }
 
+function getRing261TOption(): ModelOption {
+  return {
+    value: RING_2_6_1T_CONFIG,
+    label: 'Ring 2.6 1T',
+    description: 'Ring 2.6 1T · free for a limited time',
+    descriptionForModel: 'Ring 2.6 1T · free for a limited time',
+  }
+}
+
 function getModelOptionsBase(): ModelOption[] {
   return [
     getDefaultOptionForUser(),
+    getRing261TOption(),
     getDeepSeekOption(),
     getDeepSeekThinkOption(),
     getMoonshotK26Option(),
@@ -113,6 +127,51 @@ function getModelOptionsBase(): ModelOption[] {
     getClaudeOpusOption(),
     getGptCodexOption(),
   ]
+}
+
+function getCustomSonnetOption(): ModelOption | undefined {
+  const customSonnetModel = process.env.ANTHROPIC_DEFAULT_SONNET_MODEL
+  if (customSonnetModel) {
+    const is1m = has1mContext(customSonnetModel)
+    return {
+      value: 'sonnet',
+      label:
+        process.env.ANTHROPIC_DEFAULT_SONNET_MODEL_NAME ?? customSonnetModel,
+      description:
+        process.env.ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION ??
+        `Custom Sonnet model${is1m ? ' (1M context)' : ''}`,
+      descriptionForModel: `${process.env.ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION ?? `Custom Sonnet model${is1m ? ' with 1M context' : ''}`} (${customSonnetModel})`,
+    }
+  }
+}
+
+function getCustomOpusOption(): ModelOption | undefined {
+  const customOpusModel = process.env.ANTHROPIC_DEFAULT_OPUS_MODEL
+  if (customOpusModel) {
+    const is1m = has1mContext(customOpusModel)
+    return {
+      value: 'opus',
+      label: process.env.ANTHROPIC_DEFAULT_OPUS_MODEL_NAME ?? customOpusModel,
+      description:
+        process.env.ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION ??
+        `Custom Opus model${is1m ? ' (1M context)' : ''}`,
+      descriptionForModel: `${process.env.ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION ?? `Custom Opus model${is1m ? ' with 1M context' : ''}`} (${customOpusModel})`,
+    }
+  }
+}
+
+function getCustomHaikuOption(): ModelOption | undefined {
+  const customHaikuModel = process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
+  if (customHaikuModel) {
+    return {
+      value: 'haiku',
+      label: process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME ?? customHaikuModel,
+      description:
+        process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION ??
+        'Custom Haiku model',
+      descriptionForModel: `${process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION ?? 'Custom Haiku model'} (${customHaikuModel})`,
+    }
+  }
 }
 
 function getCustomModelProvidersOptions(): ModelOption[] {
@@ -165,6 +224,19 @@ export function getModelOptions(_fastMode = false): ModelOption[] {
     if (!options.some(existing => existing.value === opt.value)) {
       options.push(opt)
     }
+  }
+
+  const customSonnet = getCustomSonnetOption()
+  if (customSonnet !== undefined) {
+    options.push(customSonnet)
+  }
+  const customOpus = getCustomOpusOption()
+  if (customOpus !== undefined) {
+    options.push(customOpus)
+  }
+  const customHaiku = getCustomHaikuOption()
+  if (customHaiku !== undefined) {
+    options.push(customHaiku)
   }
 
   return filterModelOptionsByAllowlist(options)

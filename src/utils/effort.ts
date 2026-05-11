@@ -37,6 +37,7 @@ export function modelSupportsEffort(model: string): boolean {
     m.includes('opus-4-7') ||
     m.includes('opus-4-6') ||
     m.includes('sonnet-4-6') ||
+    m.includes('deepseek-v4-flash') ||
     m.includes('deepseek-v4-pro')
   ) {
     return true
@@ -65,7 +66,7 @@ export function modelSupportsMaxEffort(model: string): boolean {
     return supported3P
   }
   // Support DeepSeek V4 Pro specifically (Anthropic-compatible API)
-  if (model.toLowerCase().includes('deepseek-v4-pro')) {
+  if (model.toLowerCase().includes('deepseek-v4-flash') || model.toLowerCase().includes('deepseek-v4-pro')) {
     return true
   }
   if (
@@ -273,7 +274,7 @@ export function getEffortLevelDescription(level: EffortLevel): string {
     case 'xhigh':
       return 'Extended reasoning beyond high, short of max (Opus 4.7 only)'
     case 'max':
-      return 'Maximum capability with deepest reasoning (Opus 4.6/4.7/DeepSeek V4 Pro)'
+      return 'Maximum capability with deepest reasoning (Opus 4.6/4.7, DeepSeek V4 flash/pro)'
   }
 }
 

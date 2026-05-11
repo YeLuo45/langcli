@@ -21,6 +21,8 @@ export const GPT_5_3_CODEX_CONFIG = 'gpt-5.3-codex' as const satisfies ModelConf
 
 export const MOONSHOT_KIMI_K2_6_CONFIG = 'kimi-k2.6' as const satisfies ModelConfig
 
+export const RING_2_6_1T_CONFIG = 'ring-2.6-1t' as const satisfies ModelConfig
+
 export const ALL_MODEL_CONFIGS = {
   langrouterAuto: LANGROUTER_AUTO_CONFIG,
   langrouterAutoFree: LANGROUTER_AUTO_FREE_CONFIG,
@@ -32,6 +34,7 @@ export const ALL_MODEL_CONFIGS = {
   glm51: GLM_5_1_CONFIG,
   gptCodex: GPT_5_3_CODEX_CONFIG,
   moonshot26: MOONSHOT_KIMI_K2_6_CONFIG,
+  ring261T: RING_2_6_1T_CONFIG,
 } as const satisfies Record<string, ModelConfig>
 
 export type ModelKey = keyof typeof ALL_MODEL_CONFIGS
