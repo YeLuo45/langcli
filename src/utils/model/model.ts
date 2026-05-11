@@ -74,12 +74,20 @@ export function getDefaultOpusModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_OPUS_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_OPUS_MODEL
   }
+  const model = getUserSpecifiedModelSetting()
+  if (model && model.startsWith('custom:')) {
+    return model
+  }
   return CLAUDE_OPUS_4_6_CONFIG
 }
 
 export function getDefaultSonnetModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_SONNET_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_SONNET_MODEL
+  }
+  const model = getUserSpecifiedModelSetting()
+  if (model && model.startsWith('custom:')) {
+    return model
   }
   return DEEPSEEK_V4_PRO_CONFIG
 }
@@ -88,10 +96,18 @@ export function getDefaultHaikuModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
   }
+  const model = getUserSpecifiedModelSetting()
+  if (model && model.startsWith('custom:')) {
+    return model
+  }
   return DEEPSEEK_V4_FLASH_CONFIG
 }
 
 export function getDefaultFreeModel(): ModelName {
+  const model = getUserSpecifiedModelSetting()
+  if (model && model.startsWith('custom:')) {
+    return model
+  }
   return LANGROUTER_AUTO_CONFIG
 }
 

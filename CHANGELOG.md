@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.27
+
+- When using custom model, getDefaultOpusModel、getDefaultSonnetModel、getDefaultHaikuModel、getDefaultFreeModel all point to the custom model.
+
 ## 0.1.26
 
 - Add Ring 2.6 1T model
