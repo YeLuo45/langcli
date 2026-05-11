@@ -29,34 +29,34 @@ type Props = {
 
 const DEEPSEEK_MODELS = [
   {
-    id: 'deepseek-v4-flash',
-    name: 'deepseek-v4-flash (ds)',
+    id: 'deepseek-v4-flash[1m]',
+    name: 'deepseek-v4-flash[1m] (custom)',
     envKey: 'DEEPSEEK_API_KEY',
     baseUrl: 'https://api.deepseek.com',
     generationConfig: {
       timeout: 300000,
       maxRetries: 2,
-      contextWindowSize: 32768,
+      contextWindowSize: 1000000,
       samplingParams: {
-        temperature: 0.7,
-        top_p: 0.9,
-        max_tokens: 4096,
+        temperature: 0.3,
+        top_p: 0.95,
+        max_tokens: 384000,
       },
     },
   },
   {
-    id: 'deepseek-v4-pro',
-    name: 'deepseek-v4-pro[1m] (ds)',
+    id: 'deepseek-v4-pro[1m]',
+    name: 'deepseek-v4-pro[1m] (custom)',
     envKey: 'DEEPSEEK_API_KEY',
     baseUrl: 'https://api.deepseek.com',
     generationConfig: {
       timeout: 300000,
       maxRetries: 2,
-      contextWindowSize: 32768,
+      contextWindowSize: 1000000,
       samplingParams: {
-        temperature: 0.7,
-        top_p: 0.9,
-        max_tokens: 4096,
+        temperature: 0.3,
+        top_p: 0.95,
+        max_tokens: 384000,
       },
     },
   },
@@ -67,7 +67,7 @@ function hasDeepseekConfigured(): boolean {
   const openaiModels = settings?.modelProviders?.openai
   if (!openaiModels || openaiModels.length === 0) return false
   return openaiModels.some(
-    (m: { id: string }) => m.id === 'deepseek-v4-flash' || m.id === 'deepseek-v4-pro',
+    (m: { id: string }) => m.id === 'deepseek-v4-flash[1m]' || m.id === 'deepseek-v4-pro[1m]',
   )
 }
 
@@ -123,7 +123,7 @@ function DeepseekConnect({ onDone }: Props): React.ReactNode {
 
       // Remove any existing deepseek models to avoid duplicates, then add ours
       const filteredModels = currentOpenAI.filter(
-        (m: { id: string }) => m.id !== 'deepseek-v4-flash' && m.id !== 'deepseek-v4-pro',
+        (m: { id: string }) => m.id !== 'deepseek-v4-flash[1m]' && m.id !== 'deepseek-v4-pro[1m]',
       )
 
       const result = updateSettingsForSource('userSettings', {
@@ -132,6 +132,8 @@ function DeepseekConnect({ onDone }: Props): React.ReactNode {
         },
         modelProviders: {
           openai: [...filteredModels, ...DEEPSEEK_MODELS],
+          anthropic: currentSettings.modelProviders?.anthropic || [],
+          gemini: currentSettings.modelProviders?.gemini || []
         },
       })
 
@@ -156,7 +158,7 @@ function DeepseekConnect({ onDone }: Props): React.ReactNode {
           Connect to Deepseek Official
         </Text>
         <Text>Please input your Deepseek API key and press Enter to continue:</Text>
-        <Box borderStyle="round" borderColor="cyan" flexDirection="column" paddingX={1}>
+        <Box borderStyle="round" borderColor="background" flexDirection="column" paddingX={1}>
           <TextInput
             value={apiKey}
             onChange={setApiKey}
