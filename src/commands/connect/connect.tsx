@@ -30,7 +30,7 @@ type Props = {
 const DEEPSEEK_MODELS = [
   {
     id: 'deepseek-v4-flash[1m]',
-    name: 'deepseek-v4-flash[1m] (custom)',
+    name: 'Deepseek-v4-flash[1m] (custom)',
     envKey: 'DEEPSEEK_API_KEY',
     baseUrl: 'https://api.deepseek.com',
     generationConfig: {
@@ -46,7 +46,7 @@ const DEEPSEEK_MODELS = [
   },
   {
     id: 'deepseek-v4-pro[1m]',
-    name: 'deepseek-v4-pro[1m] (custom)',
+    name: 'Deepseek-v4-pro[1m] (custom)',
     envKey: 'DEEPSEEK_API_KEY',
     baseUrl: 'https://api.deepseek.com',
     generationConfig: {

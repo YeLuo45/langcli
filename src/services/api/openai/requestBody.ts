@@ -3,9 +3,7 @@
  * thinking mode. Extracted from index.ts so tests can import them without
  * triggering heavy module side-effects (OpenAI client, stream adapter, etc.).
  */
-import type {
-  ChatCompletionCreateParamsStreaming,
-} from 'openai/resources/chat/completions/completions.mjs'
+import type { ChatCompletionCreateParamsStreaming } from 'openai/resources/chat/completions/completions.mjs'
 import { getCustomModelConfig, getCustomModelId, isCustomModel } from '../../../utils/model/model.js'
 import { isEnvTruthy, isEnvDefinedFalsy } from '../../../utils/envUtils.js'
 
