@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.29
+
+- Modified the thinking handling logic of the Anthropic protocol to cooperate with the LangRouter upgrade.
+
 ## 0.1.28
 
 - Fix 1M context size for custom models defined in modelProviders session of settings.json

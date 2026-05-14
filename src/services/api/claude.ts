@@ -15,7 +15,6 @@ import type {
   BetaToolResultBlockParam,
   BetaToolUnion,
   BetaUsage,
-  BetaThinkingBlock,
   BetaMessageParam as MessageParam,
 } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
@@ -250,7 +249,6 @@ import {
   type NonNullableUsage,
 } from './logging.js'
 import {
-  CACHE_TTL_1HOUR_MS,
   checkResponseForCacheBreak,
   recordPromptState,
 } from './promptCacheBreakDetection.js'
@@ -1837,6 +1835,7 @@ async function* queryModel(
   let ttftMs = 0
   let partialMessage: BetaMessage | undefined = undefined
   const contentBlocks: (BetaContentBlock | ConnectorTextBlock)[] = []
+  const textDeltas = new Map<number, string[]>()
   let usage: NonNullableUsage = EMPTY_USAGE
   let costUSD = 0
   let stopReason: BetaStopReason | null = null
@@ -1936,6 +1935,7 @@ async function* queryModel(
     ttftMs = 0
     partialMessage = undefined
     contentBlocks.length = 0
+    textDeltas.clear()
     usage = EMPTY_USAGE
     stopReason = null
     isAdvisorInProgress = false
@@ -2091,47 +2091,8 @@ async function* queryModel(
                   })
                 }
                 break
-              case 'text': {
-                // Merge all accumulated thinking blocks into ONE
-                // AssistantMessage and yield it before text output begins.
-                // The API proxy may split thinking into multiple separate
-                // thinking blocks (one per sentence fragment), so we
-                // concatenate their text and yield a single message to
-                // avoid "∴ Thinking…" appearing repeatedly.
-                if (partialMessage) {
-                  const thinkingBlocks = Object.keys(contentBlocks)
-                    .sort((a, b) => Number(a) - Number(b))
-                    .map(k => contentBlocks[Number(k)])
-                    .filter((b): b is BetaThinkingBlock => b?.type === 'thinking')
-                  if (thinkingBlocks.length > 0) {
-                    const mergedThinking = thinkingBlocks.map(b => b.thinking).join('')
-                    const mergedBlock: BetaThinkingBlock = {
-                      type: 'thinking',
-                      thinking: mergedThinking,
-                      signature: thinkingBlocks[0].signature ?? '',
-                    }
-                    const m: AssistantMessage = {
-                      message: {
-                        ...partialMessage,
-                        usage: partialMessage.usage ?? { ...EMPTY_USAGE },
-                        content: normalizeContentFromAPI(
-                          [mergedBlock] as BetaContentBlock[],
-                          tools,
-                          options.agentId,
-                        ) as MessageContent,
-                      },
-                      requestId: streamRequestId ?? undefined,
-                      type: 'assistant',
-                      uuid: randomUUID(),
-                      timestamp: new Date().toISOString(),
-                      ...(process.env.USER_TYPE === 'ant' &&
-                        research !== undefined && { research }),
-                      ...(advisorModel && { advisorModel }),
-                    }
-                    newMessages.push(m)
-                    yield m
-                  }
-                }
+              case 'text':
+                textDeltas.set(part.index, [])
                 contentBlocks[part.index] = {
                   ...part.content_block,
                   // awkwardly, the sdk sometimes returns text as part of a
@@ -2142,7 +2103,6 @@ async function* queryModel(
                   text: '',
                 }
                 break
-              }
               case 'thinking':
                 contentBlocks[part.index] = {
                   ...part.content_block,
@@ -2238,7 +2198,7 @@ async function* queryModel(
                     })
                     throw new Error('Content block is not a text block')
                   }
-                  ;(contentBlock as { text: string }).text += delta.text
+                  textDeltas.get(part.index)?.push(delta.text!)
                   break
                 case 'signature_delta':
                   if (
@@ -2305,31 +2265,32 @@ async function* queryModel(
               })
               throw new Error('Message not found')
             }
-            // Defer thinking block yield — thinking is yielded when
-            // content_block_start(type='text') arrives, so it appears
-            // as a single complete block right before text output.
-            if (contentBlock.type !== 'thinking') {
-              const m: AssistantMessage = {
-                message: {
-                  ...partialMessage,
-                  usage: partialMessage.usage ?? { ...EMPTY_USAGE },
-                  content: normalizeContentFromAPI(
-                    [contentBlock] as BetaContentBlock[],
-                    tools,
-                    options.agentId,
-                  ) as MessageContent,
-                },
-                requestId: streamRequestId ?? undefined,
-                type: 'assistant',
-                uuid: randomUUID(),
-                timestamp: new Date().toISOString(),
-                ...(process.env.USER_TYPE === 'ant' &&
-                  research !== undefined && { research }),
-                ...(advisorModel && { advisorModel }),
-              }
-              newMessages.push(m)
-              yield m
+            // Merge accumulated text deltas into the content block (O(n) join instead of O(n^2) +=)
+            const deltas = textDeltas.get(part.index)
+            if (deltas) {
+              ;(contentBlock as { text: string }).text = deltas.join('')
+              textDeltas.delete(part.index)
             }
+            const m: AssistantMessage = {
+              message: {
+                ...partialMessage,
+                usage: partialMessage.usage ?? { ...EMPTY_USAGE },
+                content: normalizeContentFromAPI(
+                  [contentBlock] as BetaContentBlock[],
+                  tools,
+                  options.agentId,
+                ) as MessageContent,
+              },
+              requestId: streamRequestId ?? undefined,
+              type: 'assistant',
+              uuid: randomUUID(),
+              timestamp: new Date().toISOString(),
+              ...(process.env.USER_TYPE === 'ant' &&
+                research !== undefined && { research }),
+              ...(advisorModel && { advisorModel }),
+            }
+            newMessages.push(m)
+            yield m
             break
           }
           case 'message_delta': {
@@ -2613,6 +2574,9 @@ async function* queryModel(
           maxOutputTokens,
           thinkingType:
             thinkingConfig.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          ...(thinkingConfig.type === 'enabled' && {
+            thinkingBudgetTokens: thinkingConfig.budgetTokens,
+          }),
           fallback_disabled: true,
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2645,6 +2609,9 @@ async function* queryModel(
         maxOutputTokens,
         thinkingType:
           thinkingConfig.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        ...(thinkingConfig.type === 'enabled' && {
+          thinkingBudgetTokens: thinkingConfig.budgetTokens,
+        }),
         fallback_disabled: false,
         request_id: (streamRequestId ??
           'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2761,6 +2728,9 @@ async function* queryModel(
         maxOutputTokens,
         thinkingType:
           thinkingConfig.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        ...(thinkingConfig.type === 'enabled' && {
+          thinkingBudgetTokens: thinkingConfig.budgetTokens,
+        }),
         request_id:
           failedRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         fallback_cause:
