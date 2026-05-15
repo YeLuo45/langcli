@@ -109,23 +109,22 @@ function getRing261TOption(): ModelOption {
   return {
     value: RING_2_6_1T_CONFIG,
     label: 'Ring 2.6 1T',
-    description: 'Ring 2.6 1T · free for a limited time',
-    descriptionForModel: 'Ring 2.6 1T · free for a limited time',
+    description: 'Ring 2.6 1T · inclusionAI flagship model',
+    descriptionForModel: 'Ring 2.6 1T · inclusionAI flagship model',
   }
 }
 
 function getModelOptionsBase(): ModelOption[] {
   return [
     getDefaultOptionForUser(),
-    getRing261TOption(),
     getDeepSeekOption(),
     getDeepSeekThinkOption(),
     getMoonshotK26Option(),
     getGlm51Option(),
-    getMoonshotK25Option(),
     getMiniMaxOption(),
     getClaudeOpusOption(),
     getGptCodexOption(),
+    getRing261TOption(),
   ]
 }
 

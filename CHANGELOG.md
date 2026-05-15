@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.30
+
+- Change ring-2.6-1t model description
+
 ## 0.1.29
 
 - Modified the thinking handling logic of the Anthropic protocol to cooperate with the LangRouter upgrade.
