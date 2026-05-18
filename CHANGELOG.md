@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.31
+
+- Add Mimo 2.6 pro model, free for 2 weeks
+
 ## 0.1.30
 
 - Change ring-2.6-1t model description
