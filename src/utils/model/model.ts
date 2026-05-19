@@ -14,7 +14,7 @@ import {
   GPT_5_3_CODEX_CONFIG,
   MOONSHOT_KIMI_K2_6_CONFIG,
   RING_2_6_1T_CONFIG,
-  MIMO_2_6_PRO_CONFIG,
+  MIMO_2_5_PRO_CONFIG,
 } from './configs.js'
 import {
   has1mContext,
@@ -216,7 +216,7 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
     return 'Ring 2.6 1T'
   }
   if (model === 'mimo-v2.5-pro') {
-    return 'Mimo 2.6 pro'
+    return 'Mimo 2.5 pro'
   }
 
   return null
@@ -274,7 +274,7 @@ export function parseUserSpecifiedModel(
     return RING_2_6_1T_CONFIG
   }
   if (modelInputTrimmed === 'mimo-v2.5-pro') {
-    return MIMO_2_6_PRO_CONFIG
+    return MIMO_2_5_PRO_CONFIG
   }
 
   const normalizedModel = modelInputTrimmed.toLowerCase()

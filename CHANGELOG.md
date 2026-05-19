@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.1.32
+
+- Fix model name for Mimo 2.5 pro
+
 ## 0.1.31
 
-- Add Mimo 2.6 pro model, free for 2 weeks
+- Add Mimo 2.5 pro model, free for 2 weeks
 
 ## 0.1.30
 
