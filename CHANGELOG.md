@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.33
+
+- Add Chrome Use function which doesn't need Anthropic subscription 
+
 ## 0.1.32
 
 - Fix model name for Mimo 2.5 pro

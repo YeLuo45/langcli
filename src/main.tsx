@@ -146,7 +146,10 @@ const kairosGate = feature('KAIROS')
   ? (require('./assistant/gate.js') as typeof import('./assistant/gate.js'))
   : null
 
+import { execFileSync } from 'child_process'
+import { createRequire } from 'module'
 import { relative, resolve } from 'path'
+import { setMcpServerEnabled } from './services/mcp/config.js'
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
@@ -204,15 +207,6 @@ import {
 import type { LogOption } from './types/logs.js'
 import type { Message as MessageType } from './types/message.js'
 import { assertMinVersion } from './utils/autoUpdater.js'
-import {
-  CLAUDE_IN_CHROME_SKILL_HINT,
-  CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER,
-} from './utils/claudeInChrome/prompt.js'
-import {
-  setupClaudeInChrome,
-  shouldAutoEnableClaudeInChrome,
-  shouldEnableClaudeInChrome,
-} from './utils/claudeInChrome/setup.js'
 import { getContextWindowForModel } from './utils/context.js'
 import { loadConversationForResume } from './utils/conversationRecovery.js'
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js'
@@ -362,7 +356,6 @@ import {
   getUserMsgOptIn,
   setAllowedChannels,
   setAllowedSettingSources,
-  setChromeFlagOverride,
   setClientType,
   setCwdState,
   setDirectConnectServerUrl,
@@ -506,14 +499,6 @@ function isBeingDebugged() {
     // Ignore error and fall back to argument detection
     return hasInspectArg || hasInspectEnv
   }
-}
-
-// Exit if we detect node debugging or inspection
-if ("external" !== 'ant' && isBeingDebugged()) {
-  // Use process.exit directly here since we're in the top-level code before imports
-  // and gracefulShutdown is not yet available
-  // eslint-disable-next-line custom-rules/no-top-level-side-effects
-  process.exit(1)
 }
 
 /**
@@ -1697,8 +1682,8 @@ async function run(): Promise<CommanderCommand> {
       [] as string[],
     )
     .option('--disable-slash-commands', 'Disable all skills', () => true)
-    .option('--chrome', 'Enable Claude in Chrome integration')
-    .option('--no-chrome', 'Disable Claude in Chrome integration')
+    .option('--chrome', 'Register and enable mcp-chrome for browser integration')
+    .option('--no-chrome', 'Disable mcp-chrome')
     .option(
       '--file <specs...>',
       'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)',
@@ -2213,7 +2198,17 @@ async function run(): Promise<CommanderCommand> {
       }
 
       // Parse the MCP config files/strings if provided
-      let dynamicMcpConfig: Record<string, ScopedMcpServerConfig> = {}
+      let dynamicMcpConfig: Record<string, ScopedMcpServerConfig> = {
+        // Built-in MCP servers (default disabled, user enables via /mcp)
+        'mcp-chrome': {
+          type: 'http',
+          url: 'http://127.0.0.1:12306/mcp',
+          scope: 'dynamic',
+          headers: {
+            Authorization: 'Bearer my-static-token',
+          },
+        },
+      };
 
       if (mcpConfig && mcpConfig.length > 0) {
         // Process mcpConfig array
@@ -2327,69 +2322,39 @@ async function run(): Promise<CommanderCommand> {
               `Warning: MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`,
             )
           }
-          dynamicMcpConfig = { ...dynamicMcpConfig, ...allowed }
+          dynamicMcpConfig = { ...dynamicMcpConfig, ...(allowed as Record<string, ScopedMcpServerConfig>) }
         }
       }
 
-      // Extract Claude in Chrome option and enforce claude.ai subscriber check (unless user is ant)
+      // Handle --chrome option: register native messaging host and enable mcp-chrome
       const chromeOpts = options as { chrome?: boolean }
-      // Store the explicit CLI flag so teammates can inherit it
-      setChromeFlagOverride(chromeOpts.chrome)
-      const enableClaudeInChrome =
-        shouldEnableClaudeInChrome(chromeOpts.chrome) &&
-        (process.env.USER_TYPE === 'ant' || isClaudeAISubscriber())
-      const autoEnableClaudeInChrome =
-        !enableClaudeInChrome && shouldAutoEnableClaudeInChrome()
-
-      if (enableClaudeInChrome) {
-        const platform = getPlatform()
+      if (chromeOpts.chrome) {
         try {
-          logEvent('tengu_claude_in_chrome_setup', {
-            platform:
-              platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          // Resolve the mcp-chrome-bridge CLI path
+          const require = createRequire(import.meta.url)
+          const cliPath = require.resolve(
+            '@claude-code-best/mcp-chrome-bridge/dist/cli.js',
+          )
+
+          // Run the register command with force flag for Chrome
+          console.log('Registering Chrome native messaging host...')
+          execFileSync('node', [cliPath, 'register', '-f', '--browser', 'chrome'], {
+            stdio: 'inherit',
           })
 
-          const {
-            mcpConfig: chromeMcpConfig,
-            allowedTools: chromeMcpTools,
-            systemPrompt: chromeSystemPrompt,
-          } = setupClaudeInChrome()
-          dynamicMcpConfig = { ...dynamicMcpConfig, ...chromeMcpConfig }
-          allowedTools.push(...chromeMcpTools)
-          if (chromeSystemPrompt) {
-            appendSystemPrompt = appendSystemPrompt
-              ? `${chromeSystemPrompt}\n\n${appendSystemPrompt}`
-              : chromeSystemPrompt
-          }
+          setMcpServerEnabled('mcp-chrome', true)
+          console.log('mcp-chrome has been enabled.')
         } catch (error) {
-          logEvent('tengu_claude_in_chrome_setup_failed', {
-            platform:
-              platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          })
-          logForDebugging(`[Claude in Chrome] Error: ${error}`)
+          logForDebugging(`[mcp-chrome] Error: ${error}`)
           logError(error)
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.error(`Error: Failed to run with Claude in Chrome.`)
+          console.error(`Error: Failed to setup mcp-chrome.`)
           process.exit(1)
         }
-      } else if (autoEnableClaudeInChrome) {
-        try {
-          const { mcpConfig: chromeMcpConfig } = setupClaudeInChrome()
-          dynamicMcpConfig = { ...dynamicMcpConfig, ...chromeMcpConfig }
-
-          const hint =
-            feature('WEB_BROWSER_TOOL') &&
-            typeof Bun !== 'undefined' &&
-            'WebView' in Bun
-              ? CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER
-              : CLAUDE_IN_CHROME_SKILL_HINT
-          appendSystemPrompt = appendSystemPrompt
-            ? `${appendSystemPrompt}\n\n${hint}`
-            : hint
-        } catch (error) {
-          // Silently skip any errors for the auto-enable
-          logForDebugging(`[Claude in Chrome] Error (auto-enable): ${error}`)
-        }
+      } else if (chromeOpts.chrome === false) {
+        // Handle --no-chrome option: disable mcp-chrome
+        setMcpServerEnabled('mcp-chrome', false)
+        console.log('mcp-chrome has been disabled.')
       }
 
       // Extract strict MCP config flag
@@ -3252,7 +3217,7 @@ async function run(): Promise<CommanderCommand> {
           permissionMode,
           allowDangerouslySkipPermissions,
           commands,
-          enableClaudeInChrome,
+          false,
           devChannels,
         )
         logForDebugging(
@@ -3334,7 +3299,7 @@ async function run(): Promise<CommanderCommand> {
         // login state are fully loaded.
         const orgValidation = await validateForceLoginOrg()
         if (!orgValidation.valid) {
-          await exitWithError(root, orgValidation.message)
+          await exitWithError(root, (orgValidation as { valid: false; message: string }).message)
         }
       }
 
@@ -3684,7 +3649,7 @@ async function run(): Promise<CommanderCommand> {
         // Validate org restriction for non-interactive sessions
         const orgValidation = await validateForceLoginOrg()
         if (!orgValidation.valid) {
-          process.stderr.write(orgValidation.message + '\n')
+          process.stderr.write((orgValidation as { valid: false; message: string }).message + '\n')
           process.exit(1)
         }
 
@@ -4157,9 +4122,9 @@ async function run(): Promise<CommanderCommand> {
         // KAIROS block so Agent(name: "foo") can spawn in-process teammates
         // without TeamCreate. computeInitialTeamContext() is for tmux-spawned
         // teammates reading their own identity, not the assistant-mode leader.
-        teamContext: feature('KAIROS')
-          ? (assistantTeamContext ?? computeInitialTeamContext?.())
-          : computeInitialTeamContext?.(),
+        teamContext: (feature('KAIROS')
+          ? (assistantTeamContext ?? computeInitialTeamContext())
+          : computeInitialTeamContext()) as AppState['teamContext'],
       }
 
       // Add CLI initial prompt to history
@@ -5675,20 +5640,14 @@ async function run(): Promise<CommanderCommand> {
   if (feature('DIRECT_CONNECT')) {
     program
       .command('open <cc-url>')
-      .description(
-        'Connect to a Claude Code server (internal — use cc:// URLs)',
-      )
+      .description('Connect to a Claude Code server (internal — use cc:// URLs)')
       .option('-p, --print [prompt]', 'Print mode (headless)')
-      .option(
-        '--output-format <format>',
-        'Output format: text, json, stream-json',
-        'text',
-      )
+      .option('--output-format <format>', 'Output format: text, json, stream-json', 'text')
       .action(
         async (
           ccUrl: string,
           opts: {
-            print?: string | boolean
+            print?: string | true
             outputFormat: string
           },
         ) => {
