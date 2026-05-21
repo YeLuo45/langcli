@@ -3323,7 +3323,7 @@ export function buildSystemPromptBlocks(
       ...(enablePromptCaching &&
         block.cacheScope !== null && {
           cache_control: getCacheControl({
-            scope: block.cacheScope,
+            //scope: block.cacheScope,    //TODO v1/messages do not support scope field any more
             querySource: options?.querySource,
           }),
         }),
