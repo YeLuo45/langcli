@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.34
+
+- Fix missing scripts/setup-chrome-mcp.mjs
+
 ## 0.1.33
 
 - Add Chrome Use function which doesn't need Anthropic subscription 
