@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.35
+
+- /connect command now support Mimo models; disabled AttributionHeader
+
 ## 0.1.34
 
 - Fix missing scripts/setup-chrome-mcp.mjs
