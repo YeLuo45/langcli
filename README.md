@@ -15,6 +15,27 @@ allowing you to friendly use and switch between mainstream LLM models (including
   <img title="Langcli" height=400 alt="Alt text" src="./docs/assets/screen.jpg">
 </div>
 
+## Sponsors
+
+<table align="center">
+  <tr>
+    <td align="center" width="150" height="80">
+      <a href="https://langrouter.ai/">
+        <img src="/assets/langrouter-logo.svg" alt="Langrouter logo" width="72">
+      </a>
+    </td>
+    <td align="center" width="150" height="80">
+      <a href="https://mimo.mi.com">
+        <img src="https://mimo.xiaomi.com/mimo-v2-pro/assets/logo.svg" alt="Xiaomi MiMo logo" width="136">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://langrouter.ai/"><strong>LangRouter</strong></a></td>
+    <td align="center"><a href="https://mimo.mi.com"><strong>Xiaomi MiMo</strong></a></td>
+  </tr>
+</table>
+
 ## Installation
 
 ### Quick Install (Recommended)
