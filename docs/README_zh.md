@@ -14,6 +14,27 @@ Langcli 是一款在终端中使用的交互式 AI 编程助手, 它是基于Cla
   <img title="Langcli" height=400 alt="Alt text" src="/docs/assets/screen.jpg">
 </div>
 
+## 赞助商
+
+<table align="center">
+  <tr>
+    <td align="center" width="150" height="80">
+      <a href="https://langrouter.ai/">
+        <img src="/assets/langrouter-logo.svg" alt="Langrouter logo" width="72">
+      </a>
+    </td>
+    <td align="center" width="150" height="80">
+      <a href="https://mimo.mi.com">
+        <img src="https://mimo.xiaomi.com/mimo-v2-pro/assets/logo.svg" alt="Xiaomi MiMo logo" width="136">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://langrouter.ai/"><strong>LangRouter</strong></a></td>
+    <td align="center"><a href="https://mimo.mi.com"><strong>小米 MiMo</strong></a></td>
+  </tr>
+</table>
+
 ## 安装
 
 ### 快速安装（推荐）
