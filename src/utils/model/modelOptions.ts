@@ -10,6 +10,7 @@ import {
   MOONSHOT_KIMI_K2_6_CONFIG,
   RING_2_6_1T_CONFIG,
   MIMO_2_5_PRO_CONFIG,
+  MIMO_2_5_CONFIG,
 } from './configs.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
 import { getGlobalConfig } from '../config.js'
@@ -119,17 +120,27 @@ function getMimo25ProOption(): ModelOption {
   return {
     value: MIMO_2_5_PRO_CONFIG,
     label: 'Mimo 2.5 pro',
-    description: 'Mimo 2.5 pro · Xiaomi Mimo flagship model - free for 2 weeks',
+    description: 'Mimo 2.5 pro · Xiaomi Mimo flagship model - free for 2 weeks (Recommend)',
     descriptionForModel: 'Mimo 2.5 pro · Xiaomi Mimo flagship model - free for 2 weeks',
+  }
+}
+
+function getMimo25Option(): ModelOption {
+  return {
+    value: MIMO_2_5_CONFIG,
+    label: 'Mimo 2.5',
+    description: 'Mimo 2.5 · Xiaomi Mimo flagship model - free for 2 weeks',
+    descriptionForModel: 'Mimo 2.5 · Xiaomi Mimo flagship model - free for 2 weeks',
   }
 }
 
 function getModelOptionsBase(): ModelOption[] {
   return [
     getDefaultOptionForUser(),
+    getMimo25ProOption(),
+    getMimo25Option(),
     getDeepSeekOption(),
     getDeepSeekThinkOption(),
-    getMimo25ProOption(),
     getMoonshotK26Option(),
     getGlm51Option(),
     getMiniMaxOption(),

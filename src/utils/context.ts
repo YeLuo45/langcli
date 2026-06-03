@@ -204,6 +204,9 @@ export function getModelMaxOutputTokens(model: string): {
   if (model === "deepseek-v4-flash" || model === "deepseek-v4-pro") {
     defaultTokens = 128_000
     upperLimit = 384000
+  } else if (model === "mimo-v2.5" || model === "mimo-v2.5-pro") {
+    defaultTokens = 128_000
+    upperLimit = 131000
   } else if (model === "langrouter/auto") {
     defaultTokens = 4_096
     upperLimit = 8_192

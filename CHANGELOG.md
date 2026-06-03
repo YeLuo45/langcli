@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.36
+
+- Collaboration with Xiaomi Mimo, and highlight the Mimo models
+
 ## 0.1.35
 
 - /connect command now support Mimo models; disabled AttributionHeader

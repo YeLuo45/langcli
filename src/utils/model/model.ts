@@ -15,6 +15,7 @@ import {
   MOONSHOT_KIMI_K2_6_CONFIG,
   RING_2_6_1T_CONFIG,
   MIMO_2_5_PRO_CONFIG,
+  MIMO_2_5_CONFIG,
 } from './configs.js'
 import {
   has1mContext,
@@ -152,6 +153,9 @@ export function getCanonicalName(fullModelName: ModelName): ModelShortName {
   if (name.includes('mimo-v2.5-pro')) {
     return 'mimo-v2.5-pro'
   }
+  if (name.includes('mimo-v2.5')) {
+    return 'mimo-v2.5'
+  }
 
   return fullModelName
 }
@@ -218,6 +222,9 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
   if (model === 'mimo-v2.5-pro') {
     return 'Mimo 2.5 pro'
   }
+  if (model === 'mimo-v2.5') {
+    return 'Mimo 2.5'
+  }
 
   return null
 }
@@ -275,6 +282,9 @@ export function parseUserSpecifiedModel(
   }
   if (modelInputTrimmed === 'mimo-v2.5-pro') {
     return MIMO_2_5_PRO_CONFIG
+  }
+  if (modelInputTrimmed === 'mimo-v2.5') {
+    return MIMO_2_5_CONFIG
   }
 
   const normalizedModel = modelInputTrimmed.toLowerCase()
